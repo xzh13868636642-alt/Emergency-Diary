@@ -1,6 +1,6 @@
 import * as $rdf from "rdflib";
-import { createContainerAt } from "@inrupt/solid-client";
-import { isLoggedIn, solidFetch } from "./auth";
+import { createContainerAt, overwriteFile } from "@inrupt/solid-client";
+import { getWebId, isLoggedIn, session, solidFetch } from "./auth";
 import { CDM, getOntologyStore } from "./cdmnew";
 import SHACLValidator from "rdf-validate-shacl";
 import { runReasoning } from "./reasoner";
@@ -129,15 +129,12 @@ async function validateData(store: $rdf.IndexedFormula): Promise<void> {
 async function ensurePublicContainer(podBaseUrl: string): Promise<void> {
   const base = podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`;
   const publicUrl = `${base}public/`;
-  const head = await solidFetch(publicUrl, { method: "HEAD" });
-  if (head.ok || head.status === 403 || head.status === 405) return;
-  if (head.status === 401) {
-    throw new Error(
-      "Failed to save: 401 Unauthorized. Please log out and log in again, then save.",
-    );
+  const head = await session.fetch(publicUrl, { method: "HEAD" });
+  if (head.ok || head.status === 403 || head.status === 405 || head.status === 401) {
+    return;
   }
   if (head.status === 404) {
-    await createContainerAt(publicUrl, { fetch: solidFetch });
+    await createContainerAt(publicUrl, { fetch: session.fetch });
   }
 }
 
@@ -156,9 +153,20 @@ export async function saveEmergencyData(
     );
   }
 
+  const webId = getWebId();
+  if (webId) {
+    const podOrigin = new URL(podBaseUrl).origin;
+    const webOrigin = new URL(webId).origin;
+    if (podOrigin !== webOrigin) {
+      throw new Error(
+        `Login and Pod do not match. You are logged in as ${webId} but the Pod field is ${podBaseUrl}. Log in with the refugee account, or put this Pod URL: ${webOrigin}/`,
+      );
+    }
+  }
+
   await ensurePublicContainer(podBaseUrl);
 
-  const fileUrl = `${podBaseUrl}${EMERGENCY_FILE}`;
+  const fileUrl = `${podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`}${EMERGENCY_FILE.replace(/^\/+/, "")}`;
 
   const store = $rdf.graph();
 
@@ -234,23 +242,21 @@ export async function saveEmergencyData(
   // VALIDATE
   await validateData(store);
 
-  const serialized = $rdf.serialize(null, store, fileUrl, "text/turtle");
+  const serialized =
+    $rdf.serialize(null, store, fileUrl, "text/turtle") ?? "";
 
-  const response = await solidFetch(fileUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "text/turtle",
-    },
-    body: serialized,
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error(
-        "Failed to save: 401 Unauthorized. Please log out and log in again, then save.",
-      );
-    }
-    throw new Error(`Failed to save: ${response.status} ${response.statusText}`);
+  try {
+    await overwriteFile(fileUrl, new Blob([serialized], { type: "text/turtle" }), {
+      contentType: "text/turtle",
+      fetch: session.fetch,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      /401|Unauthorized|unauthor/i.test(msg)
+        ? `Failed to save: 401 Unauthorized while writing ${fileUrl} as ${webId ?? "unknown user"}. Log out, log in with the refugee email, then save.`
+        : `Failed to save ${fileUrl}: ${msg}`,
+    );
   }
 
   return fileUrl;

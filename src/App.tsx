@@ -1187,8 +1187,12 @@ setEmergencyData((prev) => ({
     try {
       setStatus(dashboardTexts.saving);
       const url = await saveEmergencyData(saveBase, toEmergencyData());
-      await makeEmergencyPrivate(saveBase);
-      setIsPublic(false);
+      try {
+        await makeEmergencyPrivate(saveBase);
+        setIsPublic(false);
+      } catch (privErr) {
+        console.warn("Could not lock emergency file after save", privErr);
+      }
 
       setStatus(`${dashboardTexts.savedPrivate}: ${url}`);
 
