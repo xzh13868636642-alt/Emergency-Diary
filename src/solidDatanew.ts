@@ -1,9 +1,4 @@
 import * as $rdf from "rdflib";
-import {
-  createContainerAt,
-  overwriteFile,
-  saveFileInContainer,
-} from "@inrupt/solid-client";
 import { getWebId, isLoggedIn, session, solidFetch } from "./auth";
 import { CDM, getOntologyStore } from "./cdmnew";
 import SHACLValidator from "rdf-validate-shacl";
@@ -128,18 +123,6 @@ async function validateData(store: $rdf.IndexedFormula): Promise<void> {
   }
 }
 
-async function ensurePublicContainer(podBaseUrl: string): Promise<void> {
-  const base = podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`;
-  const publicUrl = `${base}public/`;
-  const head = await session.fetch(publicUrl, { method: "HEAD" });
-  if (head.ok || head.status === 403 || head.status === 405 || head.status === 401) {
-    return;
-  }
-  if (head.status === 404) {
-    await createContainerAt(publicUrl, { fetch: session.fetch });
-  }
-}
-
 export async function saveEmergencyData(
   podBaseUrl: string,
   data: EmergencyData,
@@ -165,8 +148,6 @@ export async function saveEmergencyData(
       );
     }
   }
-
-  await ensurePublicContainer(podBaseUrl);
 
   const fileUrl = `${podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`}${EMERGENCY_FILE.replace(/^\/+/, "")}`;
 
@@ -246,32 +227,21 @@ export async function saveEmergencyData(
 
   const serialized =
     $rdf.serialize(null, store, fileUrl, "text/turtle") ?? "";
-  const blob = new Blob([serialized], { type: "text/turtle" });
-  const authFetch: typeof fetch = (input, init) => session.fetch(input, init);
-  const publicUrl = `${podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`}public/`;
 
-  try {
-    await saveFileInContainer(publicUrl, blob, {
-      slug: "emergency-record.ttl",
-      contentType: "text/turtle",
-      fetch: authFetch,
-    });
-    return fileUrl;
-  } catch (postErr: unknown) {
-    try {
-      await overwriteFile(fileUrl, blob, {
-        contentType: "text/turtle",
-        fetch: authFetch,
-      });
-      return fileUrl;
-    } catch (err: unknown) {
-      const postMsg = postErr instanceof Error ? postErr.message : String(postErr);
-      const putMsg = err instanceof Error ? err.message : String(err);
-      throw new Error(
-        `Failed to save as ${webId ?? "unknown user"}. POST ${publicUrl}: ${postMsg} | PUT ${fileUrl}: ${putMsg}`,
-      );
-    }
+  const response = await session.fetch(fileUrl, {
+    method: "PUT",
+    headers: { "Content-Type": "text/turtle" },
+    body: serialized,
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(
+      `Failed to save ${fileUrl} as ${webId ?? "unknown"}: ${response.status} ${response.statusText} ${body}`.trim(),
+    );
   }
+
+  return fileUrl;
 }
 
 export async function loadEmergencyData(

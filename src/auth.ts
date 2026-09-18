@@ -4,8 +4,6 @@ export const session = getDefaultSession();
 
 const OIDC_ISSUER = "https://solidcommunity.net";
 
-const REDIRECT_URL = window.location.origin + "/redirect";
-
 export async function initSession() {
   await session.handleIncomingRedirect({
     url: window.location.href,
@@ -18,13 +16,12 @@ export async function initSession() {
 }
 
 export async function login() {
-  if (session.info.isLoggedIn) {
-    await session.logout();
-  }
+  const origin = window.location.origin;
   await session.login({
     oidcIssuer: OIDC_ISSUER,
-    clientName: "Solid Emergency App",
-    redirectUrl: REDIRECT_URL,
+    clientId: `${origin}/clientid.jsonld`,
+    clientName: "Emergency Diary",
+    redirectUrl: `${origin}/redirect`,
     tokenType: "DPoP",
   });
 }
