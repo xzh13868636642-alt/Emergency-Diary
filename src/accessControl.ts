@@ -11,6 +11,7 @@ import {
 } from "@inrupt/solid-client";
 
 import { solidFetch } from "./auth";
+import { type AppLanguage, tr } from "./i18n";
 
 const EMERGENCY_FILE = "public/emergency.ttl";
 const NGO_INDEX_FILE = "public/refugeesGranted.ttl";
@@ -175,7 +176,7 @@ export async function grantAccessToSelectedNGOs(
   ngoWebIds: string[],
   refugeePodBase: string,
   refugeeWebId: string,
-  isTigrinya: boolean,
+  language: AppLanguage,
 ): Promise<void> {
   if (!ngoWebIds.length) {
     throw new Error("No NGOs selected.");
@@ -184,13 +185,12 @@ export async function grantAccessToSelectedNGOs(
   const invalid = ngoWebIds.filter((id) => !isValidWebId(id));
   if (invalid.length > 0) {
     throw new Error(
-      isTigrinya
-        ? `ተበጻሕነት ፍቓድ የለን። እዚ ትኽክለኛ መፍለዩ ዌብ መረዳእታ ዘይመንግስታዊ ትካል ኣይኮነን፡  ${invalid.join(
-            ", ",
-          )}`
-        : `Cannot grant access. These are not valid NGO WebIDs: ${invalid.join(
-            ", ",
-          )}`,
+      `${tr(
+        language,
+        "Cannot grant access. These are not valid NGO WebIDs:",
+        "ተበጻሕነት ፍቓድ የለን። እዚ ትኽክለኛ መፍለዩ ዌብ መረዳእታ ዘይመንግስታዊ ትካል ኣይኮነን፡",
+        "无法授权。这些不是有效的 NGO WebID：",
+      )} ${invalid.join(", ")}`,
     );
   }
 
@@ -252,13 +252,17 @@ export async function grantAccessToSelectedNGOs(
 
   if (failed.length > 0) {
     throw new Error(
-      isTigrinya
-        ? `ተበጻሕነት ፍቓድ ኣይተውሃበን ን: ${failed.join(
-            ", ",
-          )}. እዞም መፍለይ ዌብ ከምዘለዉን እቶም ፖድስ ክርከቡ ዝኽእል ምዃኖምን ኣረጋግጽ።`
-        : `Could not grant access for: ${failed.join(
-            ", ",
-          )}. Check that these WebIDs exist and that the pods are reachable.`,
+      `${tr(
+        language,
+        "Could not grant access for:",
+        "ተበጻሕነት ፍቓድ ኣይተውሃበን ን:",
+        "无法为以下对象授权：",
+      )} ${failed.join(", ")}. ${tr(
+        language,
+        "Check that these WebIDs exist and that the pods are reachable.",
+        "እዞም መፍለይ ዌብ ከምዘለዉን እቶም ፖድስ ክርከቡ ዝኽእል ምዃኖምን ኣረጋግጽ።",
+        "请确认这些 WebID 存在，并且 Pod 可以访问。",
+      )}`,
     );
   }
 }

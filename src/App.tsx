@@ -33,6 +33,14 @@ import {
 
 import { COUNTRIES } from "./countries";
 import { NATIONALITIES } from "./nationalities";
+import {
+  type AppLanguage,
+  localize,
+  loginStrings,
+  dashboardStrings,
+  ngoStrings,
+  tr,
+} from "./i18n";
 
 import { queryRefugeeData, type RefugeeData } from "./comunicaQuery";
 import { executeCustomQuery, type BuilderItem } from "./customComunicaQuery";
@@ -155,6 +163,7 @@ function SearchableDropdown({
   onChange,
   options,
   placeholder = "Search...",
+  emptyText = "No results",
   hasError = false,
 }: {
   label: string;
@@ -162,6 +171,7 @@ function SearchableDropdown({
   onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
+  emptyText?: string;
   hasError?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -267,7 +277,7 @@ function SearchableDropdown({
               </div>
             ))
           ) : (
-            <div style={{ padding: 8, color: "#b0bec5" }}>No results</div>
+            <div style={{ padding: 8, color: "#b0bec5" }}>{emptyText}</div>
           )}
         </div>
       )}
@@ -460,10 +470,10 @@ export default function App() {
     latitude: "",
     longitude: ""
   });
-  const [language, setLanguage] = useState<"en" | "ti">(() => {
+  const [language, setLanguage] = useState<AppLanguage>(() => {
     if (typeof window !== "undefined") {
       const stored = window.localStorage.getItem("appLanguage");
-      if (stored === "en" || stored === "ti") return stored;
+      if (stored === "en" || stored === "ti" || stored === "zh") return stored;
     }
     return "en";
   });
@@ -483,378 +493,21 @@ setEmergencyData((prev) => ({
     setStatus(dashboardTexts.gpsObtained);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    setStatus(isTigrinya ? `GPS ጌጋ: ${msg}` : `GPS Error: ${msg}`);
+    setStatus(`${tr(language, "GPS Error", "GPS ጌጋ", "GPS 错误")}: ${msg}`);
   }
 };
-  const handleLanguageChange = (lang: "en" | "ti") => {
+  const handleLanguageChange = (lang: AppLanguage) => {
     setLanguage(lang);
     if (typeof window !== "undefined") {
       window.localStorage.setItem("appLanguage", lang);
     }
   };
 
-  const isTigrinya = language === "ti";
+  const loginTexts = localize(language, loginStrings);
+  const dashboardTexts = localize(language, dashboardStrings);
+  const ngoTexts = localize(language, ngoStrings);
 
-  const loginTexts = {
-    title: isTigrinya ? "መዝገብ ህጹጽ እዋን" : "Emergency Diary",
 
-    subtitle: isTigrinya ? "ናተይ ውሑስ ማዕኸን መረዳእታ" : "My Secure Data Place",
-
-    intro: isTigrinya
-      ? `መረዳእታኹምን ሓበሬታኹምን ውሑስ ብዝኾነ መልክዑ ንባዕልኹም ረብሓ ጥራሕ ይውዕል። እቲ እምነት ዘሕደርኩምሉን ዝመረጽኩምዎን ዝሕግዘኩም ትካል መረዳእታኹም ምስጢር ሕልው ብዝኾነ መንገዲ ኣንቢቡ ንኣኹም ዘድሊ ሓገዝ ንምፍላይን ሓገዝ ንምውዳድን ጥራሕ ዝዓለመ ሓበሬታ ክረክብ ይኸእል እዩ። አቲ ኩነታት ዝተሓላለኸ እንድሕር ኮይኑ እዚ ከይዲ ሽዑ ንሽዑ ከይኮነ ግዜ ክወስድ ይኽእል እዩ። ነዚ ውሑስ ማዕኸን መረዳእታ ክትጥቀሙ እንተፈቒድኩም ነቲ “ፈቒደ” ዝብል ጠውቑ።`
-      : "Your data is held securely and only for your own personal access. The supporting organisation that you trust and grant access may confidentially read your information, with the sole purpose to assist you, or organise assistance for you. This may not be immediately, and may take time, if the situation is complex. If you want to use the Secure Data Place, click 'authorize'.",
-
-    notLoggedIn: isTigrinya ? "ኣይኣተኹምን ዘለኹም" : "You are not logged in.",
-
-    logInAs: isTigrinya ? "ከምዚ እቶ፡" : "Log in as:",
-
-    btnRefugee: isTigrinya ? "ናተይ ውሑስ ማዕኸን መረዳእታ" : "My Secure Data Place",
-
-    btnNgo: isTigrinya ? "ሓጋዚ ትካል" : "Support Organisation",
-
-    footer: isTigrinya
-      ? "ሓገዝ ንምሕታት ናይ ህጹጽ አዋን ሓበሬታኹም ኣብ ሶሊድ ፖድ ክትዕቅቡን ዝመረጽኩምዎ ትካል ነቲ ሓበሬታኹም ተጠቒሙ ዘድልየኩም ድጋፍ ክህበኩም ፍቓድ ክትህቡ ትኽእሉ ኢኹም።"
-      : "To ask help, you can store your emergency data in your Solid Pod, and you choose which organisation may access it, to give you support.",
-  };
-
-  const dashboardTexts = {
-    loggedIn: isTigrinya ? "ኣቲኹም ኣለኹም" : "Logged in",
-    yourWebId: isTigrinya ? "ናትኩም ዌብኣይዲ:" : "Your WebID:",
-    logout: isTigrinya ? "ዉጻእ" : "Logout",
-    podAndFile: isTigrinya ? "ፖድን ፋይልን" : "Pod and file",
-
-    mandatoryNote: isTigrinya
-      ? "ዝተመላኸቱ ግዴታ ክምልኡ ዘለዎም እዮም።"
-      : "fields are mandatory",
-
-    record: isTigrinya ? "መዝግቡ" : "Record",
-    recordId: isTigrinya ? "መለለዪ መዝገብ" : "Record ID",
-    date: isTigrinya ? "ዕለት" : "Date",
-
-    myDetails: isTigrinya ? "ናተይ ዝርዝር ሓበሬታ" : "My Details",
-    myId: isTigrinya ? "ናተይ ውሑስ ዳታ ቦታ መለለዪ" : "My Secure Data Place ID",
-
-    nationality: isTigrinya ? "ዜግነት" : "Nationality",
-    search: isTigrinya ? "ድለ" : "Search",
-    gender: isTigrinya ? "ጾታ" : "Gender",
-
-    select: isTigrinya ? "ምረጽ" : "Select…",
-    female: isTigrinya ? "ኣነስታይ" : "Female",
-    male: isTigrinya ? "ተባዕታይ" : "Male",
-    other: isTigrinya ? "ካሊእ" : "Other",
-    preferNot: isTigrinya ? "ክገልጽ ኣይደልን" : "Prefer not to say",
-
-    age: isTigrinya ? "ዕድመ" : "Age",
-    enterAge: isTigrinya ? "ዕድመ ኣእቱ" : "Enter age",
-
-    category: isTigrinya ? "ምደባ *" : "Category *",
-    individual: isTigrinya ? "ውልቀሰብ" : "Individual",
-    group: isTigrinya ? "ጉጅለ" : "Group",
-
-    numberInGroup: isTigrinya
-      ? "ኣብ ናተይ ውሑስ ማዕኸን መረዳእታ ጉጅለ ዘለው በዝሒ ሰባት"
-      : "Number of persons in the My Secure Data Place group",
-
-    enterNumber: isTigrinya ? "ቁጽሪ ኣእቱ" : "Enter number",
-    addNationality: isTigrinya ? "ዜግነት ኣእቱ" : "Add nationality",
-
-    groupGenders: isTigrinya ? "ናይቲ ጉጅለ ኣባላት ጾታ" : "Gender(s) of group members",
-    mixed: isTigrinya ? "ሕውስዋስ" : "Mixed",
-
-    groupAges: isTigrinya ? "ናይቲ ጉጅለ ኣባላት ዕድመ" : "Age(s) of group members",
-
-    whereAreYou: isTigrinya ? "ሐዚ ኣበይ ኣለኻ/ኺ" : "Where are you now?",
-
-    country: isTigrinya ? "ጎይታ *" : "Country *",
-    state: isTigrinya ? "ክልል" : "State / Region",
-    enterState: isTigrinya ? "ክልልኩም ኣእትው" : "Enter state or region",
-
-    town: isTigrinya ? "ከተማ" : "Town / City",
-    enterTown: isTigrinya ? "ስም ከተማኹም ኣእትው" : "Enter name of the town or city",
-
-    village: isTigrinya ? "ጣብያ" : "Village",
-    enterVillage: isTigrinya ? "ስም ጣብያኹም ኣእትው" : "Enter name of the village",
-
-    latitude: isTigrinya ? "ላቲቱድ" : "Latitude",
-    longitude: isTigrinya ? "ሎንጊቱድ" : "Longitude",
-
-    gpsNote: isTigrinya
-      ? "(ጂኦግራፊያዊ ጂፒኤስ ኮርዲኔትካ ንምርካብ፡ በይዘኦም/አን ነቲ 'ጂፒኤስ ኮርዲኔት ውሰድ' ዝብል ቁልፊ ጠውቕ እሞ ኣብ መርበብ ሓበሬታኻ ቦታ ንምእታው ፍቐድ። መተሓሳሰቢ፡ ዘለኻዩ ቦታ ከተካፍል ምስ እትደሊ ጥራይ ነዚ ጠውቕ።)"
-      : "(To get your GPS coordinates, please click the button 'Get GPS Coordinates'...)",
-
-    getGps: isTigrinya ? "ጂፒኤስ ኮርዲኔት ውሰድ" : "Get GPS Coordinates",
-
-    locationId: isTigrinya ? "መለለዩ ቦታ" : "Location ID",
-    locationName: isTigrinya ? "ስም ቦታ" : "Location Name",
-    enterLocationName: isTigrinya ? "ስም ቦታ ኣእቱ/ኣእትዊ" : "Enter location name",
-
-    locationType: isTigrinya ? "ዓይነት ቦታ *" : "Type of Location *",
-
-    refugeeCamp: isTigrinya ? "መዕቆቢ ስደተኛ/ተመዛባላይ" : "Refugee/IDP camp",
-
-    traffickingCamp: isTigrinya
-      ? "መዓስከር ዘይሕጋዊ ምስግጋር ደቂ ሰባት/ምዝውዋር ሰባት"
-      : "Human trafficking/smuggling camp",
-
-    whyNeedHelp: isTigrinya ? "ንምንታይ ኢኻ/ኺ ሓገዝ ደሊኻ/ኺ?" : "Why do you need help?",
-    youCanTick: isTigrinya
-      ? "ካብ ሓደ ንላዕሊ ኣማራጺ ምጥዋቕ ይከኣል።"
-      : "You can tick more than one option.",
-
-    abducted: isTigrinya ? "ተዓጊተ እየ" : "I am abducted",
-    heldAgainstWill: isTigrinya
-      ? "ብዘይድሌተይ እየ ተታሒዘ"
-      : "I am held against my will",
-    threatened: isTigrinya ? "ተፈራሪሐ እየ" : "I am threatened",
-    extorted: isTigrinya ? "ተጭበርቢረ እየ" : "I am extorted",
-    mustPayMoney: isTigrinya ? "ገንዘብ ክኸፍል ኣለኒ" : "I have to pay money",
-    beaten: isTigrinya ? "ተወቒዐ እየ" : "I am beaten",
-    abused: isTigrinya ? "ተጸሪፈ እየ" : "I am abused",
-
-    currentSituation: isTigrinya ? "ህልው ኩነታት" : "Current Situation",
-    placeStaying: isTigrinya
-      ? "እትጸንሐሉ ዘለኻ/ኺ ቦታ"
-      : "Place where you are staying",
-
-    house: isTigrinya ? "ገዛ" : "House",
-    apartment: isTigrinya ? "መንበሪ" : "Apartment",
-    tent: isTigrinya ? "ኬንዳ" : "Tent",
-    noAccommodation: isTigrinya ? "መዕቖቢ የለን" : "No accommodation",
-
-    moreSituationDetails: isTigrinya
-      ? "ዝርዝር ሓበሬታ ብዛዕባ ህልው ኩነታት"
-      : "More details of the current situation",
-    enterSituationDescription: isTigrinya
-      ? "ዝርዝር ኩነታት ግለጽ/ጺ"
-      : "Enter situation description",
-
-    yourNeeds: isTigrinya ? "ድሌታትካ" : "Your Needs",
-    health: isTigrinya ? "ጥዕና" : "Health",
-    education: isTigrinya ? "ትምህርቲ" : "Education",
-    shelter: isTigrinya ? "መጽለሊ" : "Shelter",
-    protection: isTigrinya ? "ውሕስና" : "Protection",
-    wash: isTigrinya ? "ማይ፣ ንጽህናን ከባብያዊ ጥዕናን" : "WASH",
-    foodSecurity: isTigrinya ? "ውሕስና ምግቢ" : "Food security",
-    transportation: isTigrinya ? "መጓዓዝያ" : "Transportation",
-    communication: isTigrinya ? "ኮምዩኒኬሽን" : "Communication",
-    mentalHealth: isTigrinya ? "ጥዕና ኣእምሮ" : "Mental Health",
-    spiritualSupport: isTigrinya ? "መንፈሳዊ ሓገዝ" : "Spiritual Support",
-    administrativeSupport: isTigrinya ? "ምምሕዳራዊ ሓገዝ" : "Administrative Support",
-
-    moreNeedsDetails: isTigrinya
-      ? "ብዛዕባ ድሌታትካ/ኪ ዝርዝር ሓበሬታ"
-      : "More details about your needs",
-    enterNeedsDescription: isTigrinya
-      ? "ድሌታትካ ዝምልከት ግለጽ/ጺ"
-      : "Enter needs description",
-
-    captivityStatus: isTigrinya ? "ኩነታት ኣተዓጋግታ *" : "Captivity Status *",
-    yes: isTigrinya ? "እወ" : "Yes",
-    no: isTigrinya ? "አይኮነን" : "No",
-    //Done by zebrehe//
-    CaptivityDetail: isTigrinya ? "ዝርዝር ኣተዓጋግታ *" : "Captivity Detail *",
-    // Done By ZEBREHE
-
-    extraInfoQuestion: isTigrinya
-      ? "ንሕና ክንፈልጦ ይግባእ ትብሎ/ትብልዮ ሓበሬታ ኣለካ/ኪ?"
-      : "Do you have information that you think we should know?",
-
-    uploadPicturesTitle: isTigrinya
-      ? "ዘለኻዩ ኩነታት ዝገልጽ ፎቶ ወይ ካሊእ መረዳእታ ጸዓን/ኒ"
-      : "Upload pictures or other proof of your situation",
-
-    uploadPicturesInfo: isTigrinya
-      ? "ኣገደስቲ እዮም ትብሎም/ትብልዮም ፎቶታት ወይ ካልኦት መረዳእታታት ክትጽዕን ትኽእል/ሊ ኢኻ/ኺ። እዚኦም ኣብ ሶሊድ ፖድካ ብውሑስ ይቐምጣሉ።"
-      : "You can upload photos or other files that you think are important. These will be stored securely in your Solid Pod.",
-
-    chooseFiles: isTigrinya ? "መረዳእታ ምረጽ/ጺ" : "Choose Files",
-    noFilesSelected: isTigrinya
-      ? "ዝመረጽኪዮ/ዝመረጽክዮ መረዳእታ የለን"
-      : "no files selected",
-
-    uploadSelected: isTigrinya
-      ? "ዝመረጽካዮም/ዝመረጽክዮም መረዳእታ ጸዓኒ/ን"
-      : "Upload selected files",
-
-    filesSelectedMessage: isTigrinya
-      ? 'ዝተመረጹ መረዳእታታት፣ ክተቕምጦም "ዝመረጽካዮም/ዝመረጽክዮም መረዳእታ ጸዓኒ/ን" ጠውቕ/ቒ'
-      : '. file(s) selected, click "Upload selected files" to store them.',
-
-    waysToContact: isTigrinya
-      ? "ንዓኻ/ኺ ክንረኽበካ/ኪ ንኽእለሉ መንገዲ እንታይ እዩ?"
-      : "What are ways in which we can contact you?",
-
-    myPhoneNumber: isTigrinya ? "ቁጽሪ ስልከይ" : "My phone number",
-
-    phoneOfSomeoneWhoKnowsMe: isTigrinya
-      ? "ናይ ዝኾነ ዝፈልጠኒ ሰብ ቁጽሪ ስልኪ"
-      : "Phone number of someone who knows me",
-
-    socialMediaHandles: isTigrinya
-      ? "ዘለውኻ/ኺ ማሕበራዊ ሚድያታት"
-      : "Social media handles",
-
-    messengerWhatsappSignal: isTigrinya
-      ? "መሰንጀር/ዋትስኣፕ/ሲግናል"
-      : "Messenger / WhatsApp / Signal",
-
-    otherHandles: isTigrinya
-      ? "ካልኦት ሜላታት ማሕበራዊ ሚድያ (ኢንስታግራም፣ ኤክስ፣ …)"
-      : "Other handles (Instagram, X, …)",
-
-    contactSomeoneElse: isTigrinya
-      ? "ንዓኻ ዝረኽበካ ሰብ ክነራኽበካ ትደሊ ዲኻ?"
-      : "Do you want us to contact someone for you?",
-
-    writeWhoToContact: isTigrinya
-      ? "ንመንን ብኸመይን ክንረክብ ከምዘለና ክትጽሕፈልና ትኽእል/ሊ ኢኻ/ኺ"
-      : "You can write who we should contact and how.",
-
-    saveToMySecureDataPlace: isTigrinya
-      ? "አብ ናተይ ውሑስ ማዕኸን መረዳእታ ኣቐምጥ/ጢ"
-      : "Save to My Secure Data Place",
-
-    previewRdfCode: isTigrinya ? "RDF ኮድ ረአ/ረኣዪ" : "Preview RDF Code",
-    status: isTigrinya ? "ኩነታት" : "Status",
-
-    selectTrustedNgos: isTigrinya
-      ? "ትኣምኖ/ትኣምንዮ ዘይመንግስታዊ ትካላት"
-      : "Select Trusted NGOs",
-
-    addNewNgo: isTigrinya ? "ሓዱሽ ዘይመንግስታዊ ትካል ወስኽ/ኺ" : "Add new NGO",
-
-    addNgo: isTigrinya ? "ዘይመንግስታዊ ትካል ወስኽ" : "Add NGO",
-
-    selectAll: isTigrinya ? "ኩሎም ምረጽ/ጺ" : "Select All",
-
-    deselectAll: isTigrinya ? "ኩሎም ኣይትምረጽ/ጺ" : "Deselect All",
-
-    deleteSelectedNgos: isTigrinya
-      ? "ዝተመረጹ ዘይመንግስታዊ ትካላት ሰርዝ"
-      : "Delete Selected NGOs",
-
-    allowTrustedRead: isTigrinya
-      ? "ዝኣመንካዮም ትካላት ንኸንብቡ ፍቐድ"
-      : "Allow Trusted Organisation(s) to read",
-
-    revokeSelectedAccess: isTigrinya
-      ? "ትካላት ንኸንብቡ ዝሃብካዮ ፍቓድ ከልከል"
-      : "Revoke Access for Selected NGOs",
-
-    saving: isTigrinya ? "ይቕመጥ ኣሎ …" : "Saving…",
-
-    savedPrivate: isTigrinya ? "ተቐሚጡ (ውልቃዊ)" : "saved (private)",
-
-    emergencyFilePublicNo: isTigrinya
-      ? "ህጹጽ ፋይል ኩሉሰብ ይርኣዮ፡ ኣይፋልን።"
-      : "Emergency file public: No",
-
-    emergencyFilePublicLabel: isTigrinya
-      ? "ህጹጽ ፋይል ኩሉሰብ ይርኣዮ፣"
-      : "Emergency file public:",
-
-    unknown: isTigrinya ? "ዘይፍለጥ" : "unknown",
-
-    grantingAccess: isTigrinya
-      ? "ንዝተመረጹ ዘይመንግስታዊ ትካላት ክሪእዎ ተበጻሕነት ፍቐድ"
-      : "Granting access to selected NGOs…",
-
-    cannotGrantInvalidWebIDs: isTigrinya
-      ? "ተበጻሕነት ፍቓድ የለን። እዚ ትኽክለኛ መፍለዩ ዌብ መረዳእታ ዘይመንግስታዊ ትካል ኣይኮነን፡"
-      : "Cannot grant access. These are not valid NGO WebIDs:",
-
-    emergencyDataLoaded: isTigrinya
-      ? "ካብ ፖድ ዝተጻዕነ መረዳእታ ህጹጽ እዋን"
-      : "emergency data loaded from pod",
-
-    ngoViewedYourData: isTigrinya
-      ? "እዚ ዘይመንግስታዊ ትካል እዚ መረዳእታኻ ሪእዎ ኣሎ"
-      : "This NGO has viewed your data",
-
-    couldNotGrantAccessFor: isTigrinya
-      ? "ተበጻሕነት ፍቓድ ኣይተውሃበን ን:"
-      : "Could not grant access for:",
-
-    checkWebIDsReachable: isTigrinya
-      ? "እዞም መፍለይ ዌብ ከምዘለዉን እቶም ፖድስ ክርከቡ ዝኽእል ምዃኖምን ኣረጋግጽ።"
-      : "Check that these WebIDs exist and that the pods are reachable.",
-
-    alreadyHasAccess: isTigrinya ? "✓ ተበጻሕነት ፍቓድ ኣለዎ" : "✓ already has access",
-
-    accessGrantedForSelectedNgos: isTigrinya
-      ? "ንዝተመረጹ ዘይመንግስታዊ ትካላት ተበጻሕነት ፍቓድ ተዋሂቡ።"
-      : "Access granted for selected NGOs.",
-
-    revokingAccess: isTigrinya
-      ? "ንዝተመረጹ ዘይመንግስታዊ ትካላት ተበጻሕነት ፍቓድ ይኽልክል ኣሎ።"
-      : "Revoking access for selected NGOs…",
-
-    accessRevoked: isTigrinya
-      ? "ንዝተመረጹ ዘይመንግስታዊ ትካላት ተበጻሕነት ፍቓድ ተኸልኪሉ።"
-      : "Access revoked for selected NGOs.",
-
-    ngosRemovedFromList: isTigrinya
-      ? "ዝተመረጹ ዘይመንግስታዊ ትካላት ካብ ዝርዝርካ ተወጊዶም።"
-      : "Selected NGOs have been removed from your list.",
-
-    selectPlaceholder: isTigrinya ? "ምረጽ..." : "Select...",
-    searchPlaceholder: isTigrinya ? "ድለ..." : "Search...",
-
-    groupMembersNationality: isTigrinya
-      ? "ዜግነት/ዜግነት ናይቶም ኣባላት ጉጅለ"
-      : "Nationality/nationalities of group members",
-
-    additionalInfoPlaceholder: isTigrinya
-      ? "ንሕና ክንፈልጦ ይግባእ ትብሎ/ትብልዮ ኣገዳሲ ሓበሬታ ክትጽሕፉልና ትኽእሉ ኢኹም።"
-      : "You can write anything that you think is important for us to know",
-
-    uploadingPictures: isTigrinya
-      ? "ፎቶታት ናብ ሶሊድ ፖድካ ይጸዓን ኣሎ…"
-      : "Uploading pictures to your Solid Pod…",
-
-    uploadedPicturesSuccess: isTigrinya
-      ? "{{count}} ፎቶ (ፎቶታት) ብዕውት መንገዲ ተጻዒኑ ኣሎ።"
-      : "Uploaded {{count}} picture(s) successfully.",
-
-    requiredFieldsMessage: isTigrinya
-      ? "ኩሎም ክምልኡ ዘለዎም ሓበሬታ ምልኡ"
-      : "Please fill all required fields",
-
-    requiredFieldsError: isTigrinya
-      ? "ስሕተት፡ በይዘኦም ኩሎም ክምልኡ ዘለዎም ሓበሬታ ምልኡ"
-      : "error: Please fill all required fields",
-
-    gettingGps: isTigrinya
-      ? "ጂፒኤስ ኮርዲኔት ይረክብ ኣሎ…"
-      : "Getting GPS coordinates...",
-
-    gpsObtained: isTigrinya ? "ጂፒኤስ ኮርዲኔት ተረኺቡ" : "GPS coordinates obtained",
-
-    pleaseSelectAtLeastOneNgo: isTigrinya
-      ? "እንተነኣሰ ሓደ ዘይመንግስታዊ ትካል ምረጹ"
-      : "Please select at least one NGO",
-
-    selectedLabel: isTigrinya ? "ዝተመረጸ: " : "Selected: ",
-
-//=============== ==============
-  trauma: isTigrinya ? "ጉድኣት አካል (Trauma)" : "Visible Injuries (Trauma)",
-    traumaCuts: isTigrinya ? "ቁርጥቆሽ / ቁርጥቆሽታት" : "Cuts / lacerations",
-    traumaBruises: isTigrinya ? "ጉድኣት ቆዳ" : "Bruises",
-    traumaBurns: isTigrinya ? "ቃጠሎ" : "Burns",
-    traumaFractures: isTigrinya ? "ስባር ዓጽሚ" : "Fractures",
-    traumaHeadInjury: isTigrinya ? "ጉድኣት ርእሲ" : "Head injury",
-    traumaGunshot: isTigrinya ? "ጥይት / ቁራጽ ብረት" : "Gunshot / shrapnel",
-    traumaSexualViolence: isTigrinya ? "ምልክታት ዓመጽ ብዛዕባ ዝምድና" : "Signs of sexual violence",
-    traumaDehydration: isTigrinya ? "ውሃ ማጽዋት / ምግቢ ማጽዋት" : "Dehydration / malnutrition",
-    traumaOther: isTigrinya ? "ካልእ ዝረአ ጉድኣት" : "Other visible injury",
-    //=============================
-
-  healthStatus: isTigrinya ? "ኩነታት ጥዕና" : "Health Condition",
-  enterHealthStatus: isTigrinya ? "ኩነታት ጥዕናኹም ግለጹ" : "Describe your health condition",
-  
-  
-       
-  };
 
   const GENDER_VALUES = ["Female", "Male", "Other", "Prefer not to say"];
   const CATEGORY_VALUES = ["Individual", "Group"];
@@ -917,7 +570,7 @@ setEmergencyData((prev) => ({
   const CAPTIVITY_STATUS_VALUES = ["Yes", "No"];
 
   const getGenderLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     switch (value) {
       case "Female":
         return dashboardTexts.female;
@@ -933,14 +586,14 @@ setEmergencyData((prev) => ({
   };
 
   const getCategoryLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     if (value === "Individual") return dashboardTexts.individual;
     if (value === "Group") return dashboardTexts.group;
     return value;
   };
 
   const getGroupGenderLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     switch (value) {
       case "Female":
         return dashboardTexts.female;
@@ -958,7 +611,7 @@ setEmergencyData((prev) => ({
   };
 
   const getLocationTypeLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     if (value === "Refugee/IDP camp") return dashboardTexts.refugeeCamp;
     if (value === "Human Trafficking/Smuggling camp")
       return dashboardTexts.traffickingCamp;
@@ -966,7 +619,7 @@ setEmergencyData((prev) => ({
   };
 
   const getAccommodationLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     switch (value) {
       case "House":
         return dashboardTexts.house;
@@ -982,7 +635,7 @@ setEmergencyData((prev) => ({
   };
 
   const getNeedsLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     switch (value) {
       case "Health":
         return dashboardTexts.health;
@@ -1012,7 +665,7 @@ setEmergencyData((prev) => ({
   };
 
   const getHelpReasonLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     switch (value) {
       case "I am abducted":
         return dashboardTexts.abducted;
@@ -1036,7 +689,7 @@ setEmergencyData((prev) => ({
   };
 
   const getCaptivityStatusLabel = (value: string) => {
-    if (!isTigrinya) return value;
+    if (language === "en") return value;
     if (value === "Yes") return dashboardTexts.yes;
     if (value === "No") return dashboardTexts.no;
     return value;
@@ -1620,7 +1273,7 @@ setEmergencyData((prev) => ({
         trustedNgos,
         podBaseUrl,
         webId,
-        isTigrinya,
+        language,
       );
 
       const updatedMap: { [webId: string]: boolean } = {};
@@ -2221,7 +1874,7 @@ setEmergencyData((prev) => ({
     }
   };
 
-  if (!ready) return <div style={{ padding: 24 }}>Loading…</div>;
+  if (!ready) return <div style={{ padding: 24 }}>{loginTexts.loading}</div>;
 
   return (
     <div
@@ -2257,7 +1910,7 @@ setEmergencyData((prev) => ({
               fontSize: 14,
             }}
           >
-            Select Language / ቋንቋ ምረጽ/ጺ :
+            {loginTexts.selectLanguage}
           </p>
           <div
             style={{
@@ -2297,6 +1950,22 @@ setEmergencyData((prev) => ({
               }}
             >
               ትግርኛ
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLanguageChange("zh")}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 4,
+                border:
+                  language === "zh" ? "2px solid #007bff" : "1px solid #ccc",
+                backgroundColor: language === "zh" ? "#007bff" : "#ffffff",
+                color: language === "zh" ? "#ffffff" : "#000000",
+                cursor: "pointer",
+                fontSize: 14,
+              }}
+            >
+              中文
             </button>
           </div>
         </div>
@@ -2514,6 +2183,7 @@ setEmergencyData((prev) => ({
                     onChange={setNationality}
                     options={NATIONALITIES}
                     placeholder={dashboardTexts.searchPlaceholder}
+                    emptyText={ngoTexts.noResults}
                   />
 
                   <SimpleDropdown
@@ -2594,6 +2264,7 @@ setEmergencyData((prev) => ({
                       onChange={setGroupNationalityInput}
                       options={NATIONALITIES}
                       placeholder={dashboardTexts.searchPlaceholder}
+                      emptyText={ngoTexts.noResults}
                     />
                     <button
                       type="button"
@@ -2686,6 +2357,7 @@ setEmergencyData((prev) => ({
                     options={COUNTRIES}
                     hasError={validationErrors.has("country")}
                     placeholder={dashboardTexts.searchPlaceholder}
+                    emptyText={ngoTexts.noResults}
                   />
                   <div style={{ marginBottom: 8 }}>
                     <label
@@ -3005,7 +2677,7 @@ setEmergencyData((prev) => ({
           }}
           style={{ marginRight: 8 }}
         />
-        {isTigrinya ? dashboardTexts[key as keyof typeof dashboardTexts] : item}
+        {language === "en" ? item : dashboardTexts[key as keyof typeof dashboardTexts]}
       </label>
     );
   })}
@@ -3476,12 +3148,11 @@ setEmergencyData((prev) => ({
                               <span style={{ marginLeft: 6 }}>
                                 ✓{" "}
                                 {hasViewed
-                                  ? isTigrinya
-                                    ? "መረዳእታኻ ተበጻሕነት ረኺቡ ኣሎ"
-                                    : "has accessed your file"
-                                  : isTigrinya
-                                    ? "ተበጻሕነት ፍቓድ ኣለዎ"
-                                    : "already has access"}
+                                  ? dashboardTexts.hasAccessedYourFile
+                                  : dashboardTexts.alreadyHasAccess.replace(
+                                      /^✓\s*/,
+                                      "",
+                                    )}
                               </span>
                             )}
                           </span>
@@ -3623,8 +3294,8 @@ setEmergencyData((prev) => ({
 
       {loggedIn && role === "ngo" && (
         <div style={{ marginTop: "24px" }}>
-          <h2>NGO Dashboard</h2>
-          <p>You are logged in as an NGO.</p>
+          <h2>{ngoTexts.dashboardTitle}</h2>
+          <p>{ngoTexts.loggedInAsNgo}</p>
 
           <div
             style={{
@@ -3639,14 +3310,14 @@ setEmergencyData((prev) => ({
               onClick={initNgoInbox}
               style={{ padding: "6px 12px", marginRight: 4 }}
             >
-              Initialise NGO inbox
+              {ngoTexts.initInbox}
             </button>
 
             <button
               onClick={loadNgoGrants}
               style={{ padding: "6px 12px", marginRight: 4 }}
             >
-              Load refugees who granted you access
+              {ngoTexts.loadRefugees}
             </button>
 
             <button
@@ -3659,9 +3330,7 @@ setEmergencyData((prev) => ({
                 cursor: "pointer",
               }}
             >
-              {showNgoDocs
-                ? "Hide CDM documentation"
-                : "Show CDM documentation"}
+              {showNgoDocs ? ngoTexts.hideCdm : ngoTexts.showCdm}
             </button>
           </div>
 
@@ -3669,7 +3338,9 @@ setEmergencyData((prev) => ({
             {ngoQueryError || ngoStatus}
           </p>
 
-          <h3>Refugees who granted access ({ngoGrants.length})</h3>
+          <h3>
+            {ngoTexts.refugeesGranted} ({ngoGrants.length})
+          </h3>
           {ngoGrants.length > 0 && (
             <div
               style={{
@@ -3692,17 +3363,17 @@ setEmergencyData((prev) => ({
                   }}
                 >
                   <div>
-                    <strong>Refugee WebID:</strong> {grant.refugeeWebId}
+                    <strong>{ngoTexts.refugeeWebId}</strong> {grant.refugeeWebId}
                   </div>
                   <div>
-                    <strong>Emergency file:</strong>{" "}
+                    <strong>{ngoTexts.emergencyFile}</strong>{" "}
                     <code style={{ fontSize: 12 }}>
                       {grant.emergencyFileUrl}
                     </code>
                   </div>
                   {grant.grantedAt && (
                     <div>
-                      <strong>Granted at:</strong>{" "}
+                      <strong>{ngoTexts.grantedAt}</strong>{" "}
                       {new Date(grant.grantedAt).toLocaleString()}
                     </div>
                   )}
@@ -3721,16 +3392,14 @@ setEmergencyData((prev) => ({
               }}
             >
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>
-                CDM Ontology documentation
+                {ngoTexts.cdmDocsTitle}
               </h3>
               <p style={{ fontSize: 14, marginBottom: 8 }}>
-                The terms below are loaded directly from the CDM ontology (
-                <code>cdm_sord.ttl</code>). Use these property names when
-                writing SPARQL queries against refugees&apos; emergency data.
+                {ngoTexts.cdmDocsIntro}
               </p>
 
               {cdmDocsLoading && (
-                <p style={{ fontSize: 14 }}>Loading CDM documentation…</p>
+                <p style={{ fontSize: 14 }}>{ngoTexts.loadingCdm}</p>
               )}
 
               {cdmDocsError && (
@@ -3739,7 +3408,7 @@ setEmergencyData((prev) => ({
 
               {!cdmDocsLoading && !cdmDocsError && cdmDocs && (
                 <>
-                  <h4 style={{ marginBottom: 4 }}>Core classes</h4>
+                  <h4 style={{ marginBottom: 4 }}>{ngoTexts.coreClasses}</h4>
                   <ul style={{ fontSize: 14, marginTop: 4, marginBottom: 8 }}>
                     {cdmDocs.classes.map((t) => (
                       <li key={t.localName}>
@@ -3749,7 +3418,7 @@ setEmergencyData((prev) => ({
                     ))}
                   </ul>
 
-                  <h4 style={{ marginBottom: 4 }}>Record properties</h4>
+                  <h4 style={{ marginBottom: 4 }}>{ngoTexts.recordProperties}</h4>
                   <ul style={{ fontSize: 14, marginTop: 4, marginBottom: 8 }}>
                     {cdmDocs.record.map((t) => (
                       <li key={t.localName}>
@@ -3759,7 +3428,7 @@ setEmergencyData((prev) => ({
                     ))}
                   </ul>
 
-                  <h4 style={{ marginBottom: 4 }}>Victim properties</h4>
+                  <h4 style={{ marginBottom: 4 }}>{ngoTexts.victimProperties}</h4>
                   <ul style={{ fontSize: 14, marginTop: 4, marginBottom: 8 }}>
                     {cdmDocs.victim.map((t) => (
                       <li key={t.localName}>
@@ -3769,7 +3438,7 @@ setEmergencyData((prev) => ({
                     ))}
                   </ul>
 
-                  <h4 style={{ marginBottom: 4 }}>Location properties</h4>
+                  <h4 style={{ marginBottom: 4 }}>{ngoTexts.locationProperties}</h4>
                   <ul style={{ fontSize: 14, marginTop: 4, marginBottom: 8 }}>
                     {cdmDocs.location.map((t) => (
                       <li key={t.localName}>
@@ -3780,7 +3449,7 @@ setEmergencyData((prev) => ({
                   </ul>
 
                   <h4 style={{ marginBottom: 4 }}>
-                    Situation and needs properties
+                    {ngoTexts.situationProperties}
                   </h4>
                   <ul style={{ fontSize: 14, marginTop: 4, marginBottom: 0 }}>
                     {cdmDocs.situation.map((t) => (
@@ -3816,7 +3485,7 @@ setEmergencyData((prev) => ({
                 cursor: ngoQueryLoading ? "not-allowed" : "pointer",
               }}
             >
-              {ngoQueryLoading ? "Querying..." : "Query Data"}
+              {ngoQueryLoading ? ngoTexts.querying : ngoTexts.queryData}
             </button>
 
             {isQueryComplete && (
@@ -3832,8 +3501,8 @@ setEmergencyData((prev) => ({
                 }}
               >
                 {customQueryMode
-                  ? "Exit Custom Mode"
-                  : "Enter Custom Query Mode"}
+                  ? ngoTexts.exitCustomMode
+                  : ngoTexts.enterCustomMode}
               </button>
             )}
           </div>
@@ -3847,7 +3516,9 @@ setEmergencyData((prev) => ({
                 borderRadius: 6,
               }}
             >
-              <h4 style={{ marginTop: 0, marginBottom: 12 }}>Filter Data</h4>
+              <h4 style={{ marginTop: 0, marginBottom: 12 }}>
+                {ngoTexts.filterData}
+              </h4>
               <div
                 style={{
                   display: "flex",
@@ -3864,7 +3535,7 @@ setEmergencyData((prev) => ({
                       fontWeight: "bold",
                     }}
                   >
-                    Select Field:
+                    {ngoTexts.selectField}
                   </label>
                   <select
                     value={filterField}
@@ -3879,24 +3550,24 @@ setEmergencyData((prev) => ({
                       minWidth: 150,
                     }}
                   >
-                    <option value="All">All (No Filter)</option>
-                    <option value="Country">Country</option>
-                    <option value="Town">Town</option>
-                    <option value="Nationality">Nationality</option>
-                    <option value="Location Type">Location Type</option>
-                    <option value="Accommodation">Accommodation</option>
-                    <option value="Needs">Needs</option>
-                    <option value="Age">Age</option>
-                    <option value="Number of Victims">Number of Victims</option>
-                    <option value="Date">Date</option>
-                    <option value="Category">Category</option>
-                    <option value="State / Region">State / Region</option>
-                    <option value="Village">Village</option>
-                    <option value="Location Name">Location Name</option>
-                    <option value="Captivity Status">Captivity Status</option>
-                    <option value="Gender">Gender</option>
-                    <option value="Why Need Help">Why Need Help</option>
-                    <option value="Uploaded Picture">Uploaded Picture</option>
+                    <option value="All">{ngoTexts.allNoFilter}</option>
+                    <option value="Country">{ngoTexts.fieldCountry}</option>
+                    <option value="Town">{ngoTexts.fieldTown}</option>
+                    <option value="Nationality">{ngoTexts.fieldNationality}</option>
+                    <option value="Location Type">{ngoTexts.fieldLocationType}</option>
+                    <option value="Accommodation">{ngoTexts.fieldAccommodation}</option>
+                    <option value="Needs">{ngoTexts.fieldNeeds}</option>
+                    <option value="Age">{ngoTexts.fieldAge}</option>
+                    <option value="Number of Victims">{ngoTexts.fieldVictims}</option>
+                    <option value="Date">{ngoTexts.fieldDate}</option>
+                    <option value="Category">{ngoTexts.fieldCategory}</option>
+                    <option value="State / Region">{ngoTexts.fieldState}</option>
+                    <option value="Village">{ngoTexts.fieldVillage}</option>
+                    <option value="Location Name">{ngoTexts.fieldLocationName}</option>
+                    <option value="Captivity Status">{ngoTexts.fieldCaptivity}</option>
+                    <option value="Gender">{ngoTexts.fieldGender}</option>
+                    <option value="Why Need Help">{ngoTexts.fieldWhyNeedHelp}</option>
+                    <option value="Uploaded Picture">{ngoTexts.fieldUploadedPicture}</option>
                   </select>
                 </div>
 
@@ -3908,7 +3579,7 @@ setEmergencyData((prev) => ({
                       fontWeight: "bold",
                     }}
                   >
-                    Select Value:
+                    {ngoTexts.selectValue}
                   </label>
                   {filterField === "Date" ? (
                     <input
@@ -3936,7 +3607,7 @@ setEmergencyData((prev) => ({
                     >
                       {filterField !== "All" && (
                         <>
-                          <option value="">All</option>
+                          <option value="">{ngoTexts.all}</option>
 
                           {(() => {
                             let values: string[] = [];
@@ -4032,7 +3703,7 @@ setEmergencyData((prev) => ({
                     marginBottom: 1,
                   }}
                 >
-                  Visualize
+                  {ngoTexts.visualize}
                 </button>
               </div>
             </div>
@@ -4055,12 +3726,12 @@ setEmergencyData((prev) => ({
                   minHeight: 150,
                 }}
               >
-                <h4 style={{ marginTop: 0 }}>Query Builder Chain</h4>
+                <h4 style={{ marginTop: 0 }}>{ngoTexts.queryBuilder}</h4>
                 <div style={{ marginBottom: 8, fontSize: 12, color: "#555" }}>
-                  <strong>Readable query:</strong>{" "}
+                  <strong>{ngoTexts.readableQuery}</strong>{" "}
                   {formatQueryChainForDisplay(queryChain) || (
                     <span style={{ color: "#999", fontStyle: "italic" }}>
-                      (no filters)
+                      {ngoTexts.noFilters}
                     </span>
                   )}
                 </div>
@@ -4075,7 +3746,7 @@ setEmergencyData((prev) => ({
                 >
                   {queryChain.length === 0 && (
                     <span style={{ color: "#999", fontStyle: "italic" }}>
-                      No filters yet. Start by adding a filter.
+                      {ngoTexts.noFiltersYet}
                     </span>
                   )}
                   {queryChain.map((item) => (
@@ -4117,32 +3788,32 @@ setEmergencyData((prev) => ({
               >
                 <div>
                   <label style={{ fontSize: 12, fontWeight: "bold" }}>
-                    1. Add Filter (Field)
+                    {ngoTexts.addFilterField}
                   </label>
                   <div style={{ display: "flex", gap: 4 }}>
                     <select
                       id="customFieldSelect"
                       style={{ flex: 1, padding: 4 }}
                     >
-                      <option value="Country">Country</option>
-                      <option value="Town">Town</option>
-                      <option value="Nationality">Nationality</option>
-                      <option value="Location Type">Location Type</option>
-                      <option value="Accommodation">Accommodation</option>
-                      <option value="Needs">Needs</option>
-                      <option value="Age">Age</option>
+                      <option value="Country">{ngoTexts.fieldCountry}</option>
+                      <option value="Town">{ngoTexts.fieldTown}</option>
+                      <option value="Nationality">{ngoTexts.fieldNationality}</option>
+                      <option value="Location Type">{ngoTexts.fieldLocationType}</option>
+                      <option value="Accommodation">{ngoTexts.fieldAccommodation}</option>
+                      <option value="Needs">{ngoTexts.fieldNeeds}</option>
+                      <option value="Age">{ngoTexts.fieldAge}</option>
                       <option value="Number of Victims">
-                        Number of Victims
+                        {ngoTexts.fieldVictims}
                       </option>
-                      <option value="Date">Date</option>
-                      <option value="Category">Category</option>
-                      <option value="State / Region">State / Region</option>
-                      <option value="Village">Village</option>
-                      <option value="Location Name">Location Name</option>
-                      <option value="Captivity Status">Captivity Status</option>
-                      <option value="Gender">Gender</option>
-                      <option value="Why Need Help">Why Need Help</option>
-                      <option value="Uploaded Picture">Uploaded Picture</option>
+                      <option value="Date">{ngoTexts.fieldDate}</option>
+                      <option value="Category">{ngoTexts.fieldCategory}</option>
+                      <option value="State / Region">{ngoTexts.fieldState}</option>
+                      <option value="Village">{ngoTexts.fieldVillage}</option>
+                      <option value="Location Name">{ngoTexts.fieldLocationName}</option>
+                      <option value="Captivity Status">{ngoTexts.fieldCaptivity}</option>
+                      <option value="Gender">{ngoTexts.fieldGender}</option>
+                      <option value="Why Need Help">{ngoTexts.fieldWhyNeedHelp}</option>
+                      <option value="Uploaded Picture">{ngoTexts.fieldUploadedPicture}</option>
                     </select>
 
                     <button
@@ -4159,14 +3830,14 @@ setEmergencyData((prev) => ({
                         opacity: canAddFilter() ? 1 : 0.5,
                       }}
                     >
-                      Add
+                      {ngoTexts.add}
                     </button>
                   </div>
                 </div>
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: "bold" }}>
-                    2. Add Condition
+                    {ngoTexts.addCondition}
                   </label>
                   <div style={{ display: "flex", gap: 4 }}>
                     <select
@@ -4175,18 +3846,18 @@ setEmergencyData((prev) => ({
                     >
                       {getLastItem()?.type === "field" && (
                         <>
-                          <option value="Equals">Equals</option>
+                          <option value="Equals">{ngoTexts.equals}</option>
                           {(getLastItem()?.value === "Age" ||
                             getLastItem()?.value === "Number of Victims" ||
                             getLastItem()?.value === "Date") && (
                             <>
-                              <option value="Greater Than">Greater Than</option>
-                              <option value="Less Than">Less Than</option>
+                              <option value="Greater Than">{ngoTexts.greaterThan}</option>
+                              <option value="Less Than">{ngoTexts.lessThan}</option>
                               <option value="Greater Than or Equal">
-                                Greater Than or Equal
+                                {ngoTexts.greaterOrEqual}
                               </option>
                               <option value="Less Than or Equal">
-                                Less Than or Equal
+                                {ngoTexts.lessOrEqual}
                               </option>
                             </>
                           )}
@@ -4214,14 +3885,14 @@ setEmergencyData((prev) => ({
                         opacity: canAddCondition() ? 1 : 0.5,
                       }}
                     >
-                      Add
+                      {ngoTexts.add}
                     </button>
                   </div>
                 </div>
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: "bold" }}>
-                    3. Add Value
+                    {ngoTexts.addValue}
                   </label>
                   <div style={{ display: "flex", gap: 4 }}>
                     {getPriorFieldForValue() === "Age" ||
@@ -4351,7 +4022,7 @@ setEmergencyData((prev) => ({
                         opacity: canAddValue() ? 1 : 0.5,
                       }}
                     >
-                      Add
+                      {ngoTexts.add}
                     </button>
                   </div>
                 </div>
@@ -4370,7 +4041,7 @@ setEmergencyData((prev) => ({
                       cursor: "pointer",
                     }}
                   >
-                    Delete Last
+                    {ngoTexts.deleteLast}
                   </button>
                   <button
                     onClick={handleExecuteCustomQuery}
@@ -4385,7 +4056,7 @@ setEmergencyData((prev) => ({
                       cursor: "pointer",
                     }}
                   >
-                    {customQueryLoading ? "Running..." : "Run Query"}
+                    {customQueryLoading ? ngoTexts.running : ngoTexts.runQuery}
                   </button>
                 </div>
               </div>
@@ -4405,7 +4076,10 @@ setEmergencyData((prev) => ({
               }}
             >
               <div>
-                <h3>Detailed Refugee Data ({ngoQueryData.length} records)</h3>
+                <h3>
+                  {ngoTexts.detailedData} ({ngoQueryData.length}{" "}
+                  {ngoTexts.records})
+                </h3>
                 <div
                   style={{
                     overflowX: "auto",
@@ -4435,7 +4109,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Country
+                          {ngoTexts.fieldCountry}
                         </th>
                         <th
                           style={{
@@ -4444,7 +4118,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Town
+                          {ngoTexts.fieldTown}
                         </th>
                         <th
                           style={{
@@ -4453,7 +4127,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Nationality
+                          {ngoTexts.fieldNationality}
                         </th>
                         <th
                           style={{
@@ -4462,7 +4136,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Location Type
+                          {ngoTexts.fieldLocationType}
                         </th>
                         <th
                           style={{
@@ -4471,7 +4145,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Accommodation
+                          {ngoTexts.fieldAccommodation}
                         </th>
                         <th
                           style={{
@@ -4480,7 +4154,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Needs
+                          {ngoTexts.fieldNeeds}
                         </th>
                         <th
                           style={{
@@ -4489,7 +4163,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Age
+                          {ngoTexts.fieldAge}
                         </th>
                         <th
                           style={{
@@ -4498,7 +4172,7 @@ setEmergencyData((prev) => ({
                             borderBottom: "2px solid #fff",
                           }}
                         >
-                          Victims
+                          {ngoTexts.victims}
                         </th>
                       </tr>
                     </thead>
@@ -4548,7 +4222,7 @@ setEmergencyData((prev) => ({
                                     alignSelf: "flex-start",
                                   }}
                                 >
-                                  View detailed refugee data
+                                  {ngoTexts.viewDetailed}
                                 </button>
                               )}
                             </div>
