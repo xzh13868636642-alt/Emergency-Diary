@@ -1,0 +1,13 @@
+# Netlify 会自动读这个文件，部署时不用再手填
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Solid 登录会跳到 /redirect，必须让所有路径都回到前端页面
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
