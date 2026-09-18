@@ -12,11 +12,10 @@ import {
 
 import { solidFetch } from "./auth";
 import { type AppLanguage, tr } from "./i18n";
-import {
-  ACCESS_LOG_FILE,
-  EMERGENCY_FILE,
-  NGO_INDEX_FILE,
-} from "./solidPaths";
+
+const EMERGENCY_FILE = "public/emergency.ttl";
+const NGO_INDEX_FILE = "public/refugeesGranted.ttl";
+const ACCESS_LOG_FILE = "private/ngo-access-log.ttl";
 const EX = "https://example.org/ns#";
 
 function ensureSlash(base: string): string {
@@ -100,9 +99,6 @@ async function appendRefugeeToNgoIndex(
   try {
     dataset = await getSolidDataset(indexUrl, { fetch: solidFetch });
   } catch {
-    dataset = createSolidDataset();
-  }
-  if (!dataset) {
     dataset = createSolidDataset();
   }
 

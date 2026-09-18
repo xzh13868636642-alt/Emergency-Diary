@@ -1,10 +1,12 @@
 import * as $rdf from "rdflib";
-import { getWebId, isLoggedIn, session, solidFetch } from "./auth";
+import { solidFetch } from "./auth";
 import { CDM, getOntologyStore } from "./cdmnew";
 import SHACLValidator from "rdf-validate-shacl";
 import { runReasoning } from "./reasoner";
 import type { DatasetCore } from "@rdfjs/types";
-import { EMERGENCY_FILE, NGO_LIST_FILE } from "./solidPaths";
+
+const EMERGENCY_FILE = "public/emergency.ttl";
+const NGO_LIST_FILE = "public/ngoList.ttl";
 
 const EX = "http://example.org/ns#";
 const EVIDENCE_URLS_PRED = $rdf.sym(EX + "evidenceUrls");
@@ -127,29 +129,7 @@ export async function saveEmergencyData(
   podBaseUrl: string,
   data: EmergencyData,
 ): Promise<string> {
-  if (!podBaseUrl) {
-    throw new Error(
-      "Pod URL is missing. Please log out and log in again, then save.",
-    );
-  }
-  if (!isLoggedIn()) {
-    throw new Error(
-      "Failed to save: 401 Unauthorized. Please log out and log in again, then save.",
-    );
-  }
-
-  const webId = getWebId();
-  if (webId) {
-    const podOrigin = new URL(podBaseUrl).origin;
-    const webOrigin = new URL(webId).origin;
-    if (podOrigin !== webOrigin) {
-      throw new Error(
-        `Login and Pod do not match. You are logged in as ${webId} but the Pod field is ${podBaseUrl}. Log in with the refugee account, or put this Pod URL: ${webOrigin}/`,
-      );
-    }
-  }
-
-  const fileUrl = `${podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`}${EMERGENCY_FILE.replace(/^\/+/, "")}`;
+  const fileUrl = `${podBaseUrl}${EMERGENCY_FILE}`;
 
   const store = $rdf.graph();
 
@@ -225,20 +205,18 @@ export async function saveEmergencyData(
   // VALIDATE
   await validateData(store);
 
-  const serialized =
-    $rdf.serialize(null, store, fileUrl, "text/turtle") ?? "";
+  const serialized = $rdf.serialize(null, store, fileUrl, "text/turtle");
 
-  const response = await session.fetch(fileUrl, {
+  const response = await solidFetch(fileUrl, {
     method: "PUT",
-    headers: { "Content-Type": "text/turtle" },
+    headers: {
+      "Content-Type": "text/turtle",
+    },
     body: serialized,
   });
 
   if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(
-      `Failed to save ${fileUrl} as ${webId ?? "unknown"}: ${response.status} ${response.statusText} ${body}`.trim(),
-    );
+    throw new Error(`Failed to save: ${response.status} ${response.statusText}`);
   }
 
   return fileUrl;

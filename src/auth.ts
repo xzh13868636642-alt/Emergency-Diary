@@ -1,8 +1,10 @@
-import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
+import { Session } from "@inrupt/solid-client-authn-browser";
 
-export const session = getDefaultSession();
+export const session = new Session();
 
 const OIDC_ISSUER = "https://solidcommunity.net";
+
+const REDIRECT_URL = window.location.origin + "/redirect";
 
 export async function initSession() {
   await session.handleIncomingRedirect({
@@ -16,13 +18,10 @@ export async function initSession() {
 }
 
 export async function login() {
-  const origin = window.location.origin;
   await session.login({
     oidcIssuer: OIDC_ISSUER,
-    clientId: `${origin}/clientid.jsonld`,
-    clientName: "Emergency Diary",
-    redirectUrl: `${origin}/redirect`,
-    tokenType: "DPoP",
+    clientName: "Solid Emergency App",
+    redirectUrl: REDIRECT_URL,
   });
 }
 
@@ -38,5 +37,4 @@ export function getWebId() {
   return session.info.webId ?? null;
 }
 
-export const solidFetch: typeof fetch = (input, init) =>
-  session.fetch(input, init);
+export const solidFetch = session.fetch.bind(session);
