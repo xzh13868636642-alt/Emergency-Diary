@@ -456,7 +456,7 @@ function requestGPS(): Promise<GeolocationCoordinates> {
 }
 
 export default function App() {
-  const [emergencyData, setEmergencyData] = useState({
+  const [, setEmergencyData] = useState({
     latitude: "",
     longitude: ""
   });

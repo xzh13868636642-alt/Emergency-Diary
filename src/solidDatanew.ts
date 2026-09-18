@@ -301,8 +301,6 @@ export async function loadEmergencyData(
   const contactMessenger = getLiteral(situationNode, CDM.contactMessenger);
   const contactOtherHandles = getLiteral(situationNode, CDM.contactOtherHandles);
   const contactRequest = getLiteral(situationNode, CDM.contactRequest);
-  const healthStatus=getLiteral(situationNode, CDM.healthStatus);
-   const trauma=getLiteral(situationNode, CDM.trauma);
      const CaptivityDetail = getLiteral(situationNode, CDM.CaptivityDetail);
    //const Needs=getLiteral(situationNode,CDM.needs);
 
