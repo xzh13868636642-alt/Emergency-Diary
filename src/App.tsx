@@ -25,7 +25,7 @@ import {
   universalAccess,
 } from "@inrupt/solid-client";
 import { solidFetch } from "./auth";
-import { getEmergencyAccess, makeEmergencyPrivate } from "./accessControl";
+import { getEmergencyAccess } from "./accessControl";
 import {
   grantAccessToSelectedNGOs,
   revokeAccessFromSelectedNGOs,
@@ -348,11 +348,12 @@ function generateId(prefix: string): string {
 }
 
 function getPodBaseFromEmergencyUrl(emergencyFileUrl: string): string | null {
-  const marker = "/public/emergency.ttl";
-  const index = emergencyFileUrl.indexOf(marker);
-  if (index === -1) return null;
-
-  return emergencyFileUrl.slice(0, index + 1);
+  const markers = ["/public/emergency-record.ttl", "/public/emergency-record.ttl"];
+  for (const marker of markers) {
+    const index = emergencyFileUrl.indexOf(marker);
+    if (index !== -1) return emergencyFileUrl.slice(0, index + 1);
+  }
+  return null;
 }
 
 async function logNgoViewFromNgo(emergencyFileUrl: string, ngoWebId: string) {
@@ -888,8 +889,8 @@ setEmergencyData((prev) => ({
       if (!podBaseUrl || allNgos.length === 0) return;
 
       const emergencyFileUrl = podBaseUrl.endsWith("/")
-        ? podBaseUrl + "public/emergency.ttl"
-        : podBaseUrl + "/public/emergency.ttl";
+        ? podBaseUrl + "public/emergency-record.ttl"
+        : podBaseUrl + "/public/emergency-record.ttl";
 
       try {
         const accessMap: Record<string, boolean> = {};
@@ -1187,30 +1188,19 @@ setEmergencyData((prev) => ({
     try {
       setStatus(dashboardTexts.saving);
       const url = await saveEmergencyData(saveBase, toEmergencyData());
-      try {
-        await makeEmergencyPrivate(saveBase);
-        setIsPublic(false);
-      } catch (privErr) {
-        console.warn("Could not lock emergency file after save", privErr);
-      }
-
       setStatus(`${dashboardTexts.savedPrivate}: ${url}`);
 
       setValidationErrors(new Set());
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      setStatus(
-        /401|Unauthorized|log in again/i.test(msg)
-          ? dashboardTexts.saveUnauthorized
-          : `error: ${msg}`,
-      );
+      setStatus(`error: ${msg}`);
     }
   }
 
   async function handlePreviewRdf() {
     try {
       setStatus("fetching rdf…");
-      const res = await solidFetch(`${podBaseUrl}public/emergency.ttl`);
+      const res = await solidFetch(`${podBaseUrl}public/emergency-record.ttl`);
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const txt = await res.text();
       setRawRdf(txt);
@@ -1292,8 +1282,8 @@ setEmergencyData((prev) => ({
     setStatus(dashboardTexts.grantingAccess);
 
     const emergencyFileUrl = grantBase.endsWith("/")
-      ? grantBase + "public/emergency.ttl"
-      : grantBase + "/public/emergency.ttl";
+      ? grantBase + "public/emergency-record.ttl"
+      : grantBase + "/public/emergency-record.ttl";
 
     try {
       await grantAccessToSelectedNGOs(
@@ -1374,8 +1364,8 @@ setEmergencyData((prev) => ({
     setStatus(dashboardTexts.revokingAccess);
 
     const emergencyFileUrl = podBaseUrl.endsWith("/")
-      ? podBaseUrl + "public/emergency.ttl"
-      : podBaseUrl + "/public/emergency.ttl";
+      ? podBaseUrl + "public/emergency-record.ttl"
+      : podBaseUrl + "/public/emergency-record.ttl";
 
     try {
       await revokeAccessFromSelectedNGOs(trustedNgos, podBaseUrl, webId);

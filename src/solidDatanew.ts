@@ -5,9 +5,7 @@ import { CDM, getOntologyStore } from "./cdmnew";
 import SHACLValidator from "rdf-validate-shacl";
 import { runReasoning } from "./reasoner";
 import type { DatasetCore } from "@rdfjs/types";
-
-const EMERGENCY_FILE = "public/emergency.ttl";
-const NGO_LIST_FILE = "public/ngoList.ttl";
+import { EMERGENCY_FILE, NGO_LIST_FILE } from "./solidPaths";
 
 const EX = "http://example.org/ns#";
 const EVIDENCE_URLS_PRED = $rdf.sym(EX + "evidenceUrls");

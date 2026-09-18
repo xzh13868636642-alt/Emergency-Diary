@@ -12,10 +12,11 @@ import {
 
 import { solidFetch } from "./auth";
 import { type AppLanguage, tr } from "./i18n";
-
-const EMERGENCY_FILE = "public/emergency.ttl";
-const NGO_INDEX_FILE = "public/refugeesGranted.ttl";
-const ACCESS_LOG_FILE = "private/ngo-access-log.ttl";
+import {
+  ACCESS_LOG_FILE,
+  EMERGENCY_FILE,
+  NGO_INDEX_FILE,
+} from "./solidPaths";
 const EX = "https://example.org/ns#";
 
 function ensureSlash(base: string): string {
