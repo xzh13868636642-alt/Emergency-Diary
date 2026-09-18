@@ -9,7 +9,7 @@ const REDIRECT_URL = window.location.origin + "/redirect";
 export async function initSession() {
   await session.handleIncomingRedirect({
     url: window.location.href,
-    restorePreviousSession: true,
+    restorePreviousSession: false,
   });
 
   if (new URL(window.location.href).pathname === "/redirect") {

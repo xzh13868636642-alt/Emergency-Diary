@@ -6,6 +6,11 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[[headers]]
+  for = "/clientid.jsonld"
+  [headers.values]
+    Content-Type = "application/ld+json"
+
 # Solid 登录会跳到 /redirect，必须让所有路径都回到前端页面
 [[redirects]]
   from = "/*"

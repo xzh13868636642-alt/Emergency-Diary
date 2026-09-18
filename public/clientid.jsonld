@@ -1,0 +1,14 @@
+{
+  "@context": "https://www.w3.org/ns/solid/oidc-context.jsonld",
+  "client_id": "https://emergency-diary-dsip-leiden.netlify.app/clientid.jsonld",
+  "redirect_uris": [
+    "https://emergency-diary-dsip-leiden.netlify.app/redirect",
+    "https://emergency-diary-dsip-leiden.netlify.app/",
+    "http://localhost:5173/redirect"
+  ],
+  "client_name": "Emergency Diary",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "scope": "openid webid offline_access",
+  "token_endpoint_auth_method": "none"
+}
