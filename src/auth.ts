@@ -1,6 +1,6 @@
-import { Session } from "@inrupt/solid-client-authn-browser";
+import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
 
-export const session = new Session();
+export const session = getDefaultSession();
 
 const OIDC_ISSUER = "https://solidcommunity.net";
 
@@ -16,16 +16,11 @@ export async function initSession() {
     restorePreviousSession: !hasOAuthParams,
   });
 
-  if (session.info.isLoggedIn && session.info.webId) {
-    try {
-      const origin = `${new URL(session.info.webId).origin}/`;
-      const probe = await session.fetch(origin, { method: "HEAD" });
-      if (probe.status === 401) {
-        await session.logout();
-      }
-    } catch {
-      /* keep session if probe fails for network reasons */
-    }
+  // solidcommunity.net often issues a Bearer token on the first callback;
+  // a full reload restores a working DPoP session.
+  if (hasOAuthParams && session.info.isLoggedIn) {
+    window.location.replace(`${window.location.origin}/`);
+    return;
   }
 
   if (currentUrl.pathname === "/redirect") {
@@ -41,6 +36,7 @@ export async function login() {
     oidcIssuer: OIDC_ISSUER,
     clientName: "Solid Emergency App",
     redirectUrl: REDIRECT_URL,
+    tokenType: "DPoP",
   });
 }
 

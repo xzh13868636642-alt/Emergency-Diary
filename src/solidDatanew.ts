@@ -1,5 +1,9 @@
 import * as $rdf from "rdflib";
-import { createContainerAt, overwriteFile } from "@inrupt/solid-client";
+import {
+  createContainerAt,
+  overwriteFile,
+  saveFileInContainer,
+} from "@inrupt/solid-client";
 import { getWebId, isLoggedIn, session, solidFetch } from "./auth";
 import { CDM, getOntologyStore } from "./cdmnew";
 import SHACLValidator from "rdf-validate-shacl";
@@ -242,22 +246,32 @@ export async function saveEmergencyData(
 
   const serialized =
     $rdf.serialize(null, store, fileUrl, "text/turtle") ?? "";
+  const blob = new Blob([serialized], { type: "text/turtle" });
+  const authFetch: typeof fetch = (input, init) => session.fetch(input, init);
+  const publicUrl = `${podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`}public/`;
 
   try {
-    await overwriteFile(fileUrl, new Blob([serialized], { type: "text/turtle" }), {
+    await saveFileInContainer(publicUrl, blob, {
+      slug: "emergency-record.ttl",
       contentType: "text/turtle",
-      fetch: session.fetch,
+      fetch: authFetch,
     });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      /401|Unauthorized|unauthor/i.test(msg)
-        ? `Failed to save: 401 Unauthorized while writing ${fileUrl} as ${webId ?? "unknown user"}. Log out, log in with the refugee email, then save.`
-        : `Failed to save ${fileUrl}: ${msg}`,
-    );
+    return fileUrl;
+  } catch (postErr: unknown) {
+    try {
+      await overwriteFile(fileUrl, blob, {
+        contentType: "text/turtle",
+        fetch: authFetch,
+      });
+      return fileUrl;
+    } catch (err: unknown) {
+      const postMsg = postErr instanceof Error ? postErr.message : String(postErr);
+      const putMsg = err instanceof Error ? err.message : String(err);
+      throw new Error(
+        `Failed to save as ${webId ?? "unknown user"}. POST ${publicUrl}: ${postMsg} | PUT ${fileUrl}: ${putMsg}`,
+      );
+    }
   }
-
-  return fileUrl;
 }
 
 export async function loadEmergencyData(
