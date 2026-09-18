@@ -929,8 +929,16 @@ setEmergencyData((prev) => ({
   }, [allNgos, podBaseUrl]);
 
   useEffect(() => {
+    if (!webId) return;
+    let originBase = "";
+    try {
+      originBase = `${new URL(webId).origin}/`;
+    } catch {
+      return;
+    }
+    setPodBaseUrl((prev) => prev || originBase);
+
     (async () => {
-      if (!webId) return;
       try {
         const profileDoc = webId.split("#")[0];
         const ds = await getSolidDataset(profileDoc, { fetch: solidFetch });
@@ -940,19 +948,15 @@ setEmergencyData((prev) => ({
           me,
           "http://www.w3.org/ns/pim/space#storage",
         );
-        const base = storages[0]
-          ? storages[0].endsWith("/")
+        if (storages[0]) {
+          const base = storages[0].endsWith("/")
             ? storages[0]
-            : storages[0] + "/"
-          : `${new URL(webId).origin}/`;
-        if (base) setPodBaseUrl(base);
+            : `${storages[0]}/`;
+          setPodBaseUrl(base);
+        }
       } catch (err) {
         console.warn("Error while detecting storage", err);
-        try {
-          if (webId) setPodBaseUrl(`${new URL(webId).origin}/`);
-        } catch {
-          /* ignore */
-        }
+        setPodBaseUrl((prev) => prev || originBase);
       }
     })();
   }, [webId]);
@@ -1175,10 +1179,15 @@ setEmergencyData((prev) => ({
       return;
     }
 
+    const saveBase =
+      podBaseUrl ||
+      (webId ? `${new URL(webId).origin}/` : "");
+    if (saveBase && saveBase !== podBaseUrl) setPodBaseUrl(saveBase);
+
     try {
       setStatus(dashboardTexts.saving);
-      const url = await saveEmergencyData(podBaseUrl, toEmergencyData());
-      await makeEmergencyPrivate(podBaseUrl);
+      const url = await saveEmergencyData(saveBase, toEmergencyData());
+      await makeEmergencyPrivate(saveBase);
       setIsPublic(false);
 
       setStatus(`${dashboardTexts.savedPrivate}: ${url}`);
@@ -1261,7 +1270,12 @@ setEmergencyData((prev) => ({
       return;
     }
 
-    if (!podBaseUrl) {
+    const grantBase =
+      podBaseUrl ||
+      (webId ? `${new URL(webId).origin}/` : "");
+    if (grantBase && grantBase !== podBaseUrl) setPodBaseUrl(grantBase);
+
+    if (!grantBase) {
       setStatus("Could not detect your Pod base URL.");
       return;
     }
@@ -1273,14 +1287,14 @@ setEmergencyData((prev) => ({
 
     setStatus(dashboardTexts.grantingAccess);
 
-    const emergencyFileUrl = podBaseUrl.endsWith("/")
-      ? podBaseUrl + "public/emergency.ttl"
-      : podBaseUrl + "/public/emergency.ttl";
+    const emergencyFileUrl = grantBase.endsWith("/")
+      ? grantBase + "public/emergency.ttl"
+      : grantBase + "/public/emergency.ttl";
 
     try {
       await grantAccessToSelectedNGOs(
         trustedNgos,
-        podBaseUrl,
+        grantBase,
         webId,
         language,
       );

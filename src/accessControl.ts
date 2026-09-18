@@ -101,6 +101,9 @@ async function appendRefugeeToNgoIndex(
   } catch {
     dataset = createSolidDataset();
   }
+  if (!dataset) {
+    dataset = createSolidDataset();
+  }
 
   const now = new Date().toISOString();
 
