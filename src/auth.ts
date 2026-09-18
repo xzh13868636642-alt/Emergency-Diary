@@ -7,23 +7,12 @@ const OIDC_ISSUER = "https://solidcommunity.net";
 const REDIRECT_URL = window.location.origin + "/redirect";
 
 export async function initSession() {
-  const currentUrl = new URL(window.location.href);
-  const hasOAuthParams =
-    currentUrl.searchParams.has("code") || currentUrl.searchParams.has("state");
-
   await session.handleIncomingRedirect({
     url: window.location.href,
-    restorePreviousSession: !hasOAuthParams,
+    restorePreviousSession: true,
   });
 
-  // solidcommunity.net often issues a Bearer token on the first callback;
-  // a full reload restores a working DPoP session.
-  if (hasOAuthParams && session.info.isLoggedIn) {
-    window.location.replace(`${window.location.origin}/`);
-    return;
-  }
-
-  if (currentUrl.pathname === "/redirect") {
+  if (new URL(window.location.href).pathname === "/redirect") {
     window.history.replaceState({}, "", "/");
   }
 }
