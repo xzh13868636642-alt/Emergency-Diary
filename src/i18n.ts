@@ -342,6 +342,11 @@ export const dashboardStrings = {
     zh: "收回所选 NGO 的权限",
   },
   saving: { en: "Saving…", ti: "ይቕመጥ ኣሎ …", zh: "正在保存…" },
+  saveUnauthorized: {
+    en: "Save failed (401). Your Solid login expired. Click Logout, log in again, then save.",
+    ti: "Save failed (401). Your Solid login expired. Click Logout, log in again, then save.",
+    zh: "保存失败（401）：Solid 登录已失效。请先退出，重新登录后再保存。",
+  },
   savedPrivate: { en: "saved (private)", ti: "ተቐሚጡ (ውልቃዊ)", zh: "已保存（私密）" },
   emergencyFilePublicNo: {
     en: "Emergency file public: No",
@@ -512,6 +517,41 @@ export const ngoStrings = {
     en: "Initialise NGO inbox",
     ti: "Initialise NGO inbox",
     zh: "初始化 NGO 收件箱",
+  },
+  initNeedNgoLogin: {
+    en: "Please log in as an NGO first.",
+    ti: "Please log in as an NGO first.",
+    zh: "请先以救助机构身份登录。",
+  },
+  initNoPod: {
+    en: "Could not detect your Pod base URL. Fill Pod and file first.",
+    ti: "Could not detect your Pod base URL. Fill Pod and file first.",
+    zh: "检测不到 Pod 地址。请先在「Pod 与文件」中填写，例如 https://ngo-11.solidcommunity.net/",
+  },
+  initChecking: {
+    en: "Checking inbox status...",
+    ti: "Checking inbox status...",
+    zh: "正在检查收件箱…",
+  },
+  initAlready: {
+    en: "NGO inbox already initialised! You can now go to the refugee page and grant access.",
+    ti: "NGO inbox already initialised! You can now go to the refugee page and grant access.",
+    zh: "NGO 收件箱已经初始化过。现在请到难民页面授权。",
+  },
+  initWorking: {
+    en: "Initialising NGO inbox...",
+    ti: "Initialising NGO inbox...",
+    zh: "正在初始化 NGO 收件箱…",
+  },
+  initSuccess: {
+    en: "NGO inbox initialised successfully. Now open the refugee page and grant this NGO WebID.",
+    ti: "NGO inbox initialised successfully. Now open the refugee page and grant this NGO WebID.",
+    zh: "NGO 收件箱初始化成功。请打开难民页面，把这个 NGO 的 WebID 加进去并授权。",
+  },
+  initError: {
+    en: "Error initialising NGO inbox:",
+    ti: "Error initialising NGO inbox:",
+    zh: "初始化 NGO 收件箱失败：",
   },
   loadRefugees: {
     en: "Load refugees who granted you access",

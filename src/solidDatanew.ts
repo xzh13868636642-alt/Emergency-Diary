@@ -1,5 +1,6 @@
 import * as $rdf from "rdflib";
-import { solidFetch } from "./auth";
+import { createContainerAt } from "@inrupt/solid-client";
+import { isLoggedIn, solidFetch } from "./auth";
 import { CDM, getOntologyStore } from "./cdmnew";
 import SHACLValidator from "rdf-validate-shacl";
 import { runReasoning } from "./reasoner";
@@ -125,10 +126,38 @@ async function validateData(store: $rdf.IndexedFormula): Promise<void> {
   }
 }
 
+async function ensurePublicContainer(podBaseUrl: string): Promise<void> {
+  const base = podBaseUrl.endsWith("/") ? podBaseUrl : `${podBaseUrl}/`;
+  const publicUrl = `${base}public/`;
+  const head = await solidFetch(publicUrl, { method: "HEAD" });
+  if (head.ok || head.status === 403 || head.status === 405) return;
+  if (head.status === 401) {
+    throw new Error(
+      "Failed to save: 401 Unauthorized. Please log out and log in again, then save.",
+    );
+  }
+  if (head.status === 404) {
+    await createContainerAt(publicUrl, { fetch: solidFetch });
+  }
+}
+
 export async function saveEmergencyData(
   podBaseUrl: string,
   data: EmergencyData,
 ): Promise<string> {
+  if (!podBaseUrl) {
+    throw new Error(
+      "Pod URL is missing. Please log out and log in again, then save.",
+    );
+  }
+  if (!isLoggedIn()) {
+    throw new Error(
+      "Failed to save: 401 Unauthorized. Please log out and log in again, then save.",
+    );
+  }
+
+  await ensurePublicContainer(podBaseUrl);
+
   const fileUrl = `${podBaseUrl}${EMERGENCY_FILE}`;
 
   const store = $rdf.graph();
@@ -216,6 +245,11 @@ export async function saveEmergencyData(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error(
+        "Failed to save: 401 Unauthorized. Please log out and log in again, then save.",
+      );
+    }
     throw new Error(`Failed to save: ${response.status} ${response.statusText}`);
   }
 

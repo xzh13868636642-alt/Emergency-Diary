@@ -37,4 +37,5 @@ export function getWebId() {
   return session.info.webId ?? null;
 }
 
-export const solidFetch = session.fetch.bind(session);
+export const solidFetch: typeof fetch = (input, init) =>
+  session.fetch(input, init);

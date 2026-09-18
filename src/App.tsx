@@ -944,10 +944,15 @@ setEmergencyData((prev) => ({
           ? storages[0].endsWith("/")
             ? storages[0]
             : storages[0] + "/"
-          : "";
+          : `${new URL(webId).origin}/`;
         if (base) setPodBaseUrl(base);
       } catch (err) {
         console.warn("Error while detecting storage", err);
+        try {
+          if (webId) setPodBaseUrl(`${new URL(webId).origin}/`);
+        } catch {
+          /* ignore */
+        }
       }
     })();
   }, [webId]);
@@ -1181,7 +1186,11 @@ setEmergencyData((prev) => ({
       setValidationErrors(new Set());
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      setStatus(`error: ${msg}`);
+      setStatus(
+        /401|Unauthorized|log in again/i.test(msg)
+          ? dashboardTexts.saveUnauthorized
+          : `error: ${msg}`,
+      );
     }
   }
 
@@ -1406,33 +1415,43 @@ setEmergencyData((prev) => ({
   }
 
   async function initNgoInbox() {
+    setNgoQueryError("");
+
     if (!loggedIn || role !== "ngo") {
-      setNgoStatus("Please log in as an NGO first.");
+      setNgoStatus(ngoTexts.initNeedNgoLogin);
       return;
     }
 
-    if (!podBaseUrl) {
-      setNgoStatus("Could not detect your Pod base URL.");
+    let baseUrl = podBaseUrl;
+    if (!baseUrl && webId) {
+      try {
+        baseUrl = `${new URL(webId).origin}/`;
+        setPodBaseUrl(baseUrl);
+      } catch {
+        baseUrl = "";
+      }
+    }
+
+    if (!baseUrl) {
+      setNgoStatus(ngoTexts.initNoPod);
       return;
     }
 
-    const base = podBaseUrl.endsWith("/")
-      ? podBaseUrl.slice(0, -1)
-      : podBaseUrl;
+    const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const indexUrl = `${base}/public/refugeesGranted.ttl`;
 
     try {
-      setNgoStatus("Checking inbox status...");
+      setNgoStatus(ngoTexts.initChecking);
 
       try {
         await getSolidDataset(indexUrl, { fetch: solidFetch });
-        setNgoStatus("NGO inbox already initialised!");
+        setNgoStatus(ngoTexts.initAlready);
         return;
       } catch {
         // File does NOT exist – continue to create it
       }
 
-      setNgoStatus("Initialising NGO inbox...");
+      setNgoStatus(ngoTexts.initWorking);
 
       const emptyDataset = createSolidDataset();
 
@@ -1446,10 +1465,10 @@ setEmergencyData((prev) => ({
         { fetch: solidFetch },
       );
 
-      setNgoStatus("NGO inbox initialised successfully.");
+      setNgoStatus(ngoTexts.initSuccess);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      setNgoStatus(`Error initialising NGO inbox: ${msg}`);
+      setNgoStatus(`${ngoTexts.initError} ${msg}`);
     }
   }
 
@@ -3334,9 +3353,30 @@ setEmergencyData((prev) => ({
             </button>
           </div>
 
-          <p style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
-            {ngoQueryError || ngoStatus}
-          </p>
+          {ngoStatus && (
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginTop: 12,
+                color: "#166534",
+              }}
+            >
+              {ngoStatus}
+            </p>
+          )}
+          {ngoQueryError && (
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginTop: 8,
+                color: "#b91c1c",
+              }}
+            >
+              {ngoQueryError}
+            </p>
+          )}
 
           <h3>
             {ngoTexts.refugeesGranted} ({ngoGrants.length})
